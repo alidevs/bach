@@ -1,0 +1,19 @@
+[package]
+name = "bach"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.7.5"
+chrono = { version = "0.4.38", features = ["serde"] }
+deadpool-diesel = { version = "0.6.1", features = ["postgres"] }
+diesel = { version = "2.2.1", features = ["postgres", "chrono"]}
+diesel_migrations = "2.2.0"
+dotenvy = "0.15.7"
+serde = { version = "1.0.204", features = ["derive"] }
+serde_json = "1.0.120"
+tokio = { version = "1.38.0", features = ["full"] }
+tower-http = { version = "0.5.2", features = ["trace"] }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+uuid = { version = "1.5.0", features = ["v4"] }
