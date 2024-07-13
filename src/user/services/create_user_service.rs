@@ -1,6 +1,8 @@
-use super::schemas::CreateUserRequest;
 use crate::{
-    commons::schema::ErrorResponse, schema::users, state::AppState, user::models::NewUserOwned,
+    commons::schema::ErrorResponse,
+    schema::users,
+    state::AppState,
+    user::{models::NewUserOwned, schemas::CreateUserRequest},
 };
 use axum::{
     extract::State,
