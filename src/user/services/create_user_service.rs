@@ -2,7 +2,7 @@ use crate::{
     commons::schema::ErrorResponse,
     schema::users,
     state::AppState,
-    user::{models::NewUserOwned, schemas::CreateUserRequest},
+    user::{models::NewUser, schemas::CreateUserRequest},
 };
 use axum::{
     extract::State,
@@ -12,41 +12,25 @@ use axum::{
 };
 use diesel::{insert_into, Connection, RunQueryDsl};
 use serde::Serialize;
-use uuid::Uuid;
 
 pub async fn create_user_service(
     State(state): State<AppState>,
     Json(body): Json<CreateUserRequest>,
 ) -> impl IntoResponse {
-    let conn = match state.pool.get().await {
-        Ok(conn) => conn,
-        Err(e) => {
-            tracing::error!("Failed to get connection: {}", e);
-            let error_response = ErrorResponse {
-                error: "Failed to get connection".to_string(),
-                details: e.to_string(),
-            };
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)).into_response();
-        }
-    };
+    let conn = state.get_connection().await.unwrap();
 
-    let new_user = NewUserOwned {
-        id: Uuid::new_v4().to_string(),
-        username: body.username,
-        first_name: body.first_name,
-        last_name: body.last_name,
-        email: body.email,
-        timestamp: chrono::Utc::now().naive_utc(),
-    };
+    let new_user = NewUser::new(
+        body.username,
+        body.password,
+        body.first_name,
+        body.last_name,
+        body.email,
+    );
 
     let result = conn
         .interact(move |conn| {
             conn.transaction::<_, diesel::result::Error, _>(|conn| {
-                let new_user_ref = new_user.as_new_user();
-
-                let insert_result = insert_into(users::table)
-                    .values(&new_user_ref)
-                    .execute(conn);
+                let insert_result = insert_into(users::table).values(&new_user).execute(conn);
 
                 match insert_result {
                     Ok(_) => {
@@ -63,9 +47,9 @@ pub async fn create_user_service(
         .await;
 
     match result {
-        Ok(Ok(user)) => {
-            tracing::info!("User created successfully");
-            create_response(StatusCode::CREATED, user)
+        Ok(Ok(new_user)) => {
+            tracing::info!("User created successfully: {:?}", new_user);
+            create_response(StatusCode::CREATED, new_user)
         }
         Ok(Err(e)) => {
             tracing::error!("Failed to create user: {}", e);

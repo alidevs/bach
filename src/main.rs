@@ -9,7 +9,9 @@ use axum::{
 };
 use commons::app_state;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use user::services::create_user_service::create_user_service;
+use user::services::{
+    create_user_service::create_user_service, list_users_service::list_users_service,
+};
 
 #[tokio::main]
 async fn main() {
@@ -22,6 +24,7 @@ async fn main() {
     let app = Router::new()
         .route("/healthcheck", get(health_check))
         .route("/user", post(create_user_service))
+        .route("/user", get(list_users_service))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
