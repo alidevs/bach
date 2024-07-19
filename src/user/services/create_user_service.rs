@@ -29,7 +29,7 @@ pub async fn create_user_service(
 
     let result = conn
         .interact(move |conn| {
-            conn.transaction::<_, diesel::result::Error, _>(|conn| {
+            conn.transaction(|conn| {
                 let insert_result = insert_into(users::table).values(&new_user).execute(conn);
 
                 match insert_result {
