@@ -2,7 +2,7 @@ use crate::{
     commons::schema::ErrorResponse,
     schema::users,
     state::AppState,
-    user::{models::NewUser, schemas::CreateUserRequest},
+    user::{models::NewUser, schemas::RegisterUserRequest},
 };
 use axum::{
     extract::State,
@@ -13,9 +13,9 @@ use axum::{
 use diesel::{insert_into, result::Error, Connection, PgConnection, RunQueryDsl};
 use serde::Serialize;
 
-pub async fn create_user_service(
+pub async fn register_user_service(
     State(state): State<AppState>,
-    Json(body): Json<CreateUserRequest>,
+    Json(body): Json<RegisterUserRequest>,
 ) -> impl IntoResponse {
     let conn = state.get_connection().await.unwrap();
 
