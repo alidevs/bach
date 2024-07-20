@@ -9,19 +9,19 @@ use diesel::{Connection, ExpressionMethods, QueryDsl, RunQueryDsl};
 use serde::Serialize;
 
 use crate::{
-    commons::{auth::JwtToken, schema::ErrorResponse},
+    commons::{auth::Claims, schema::ErrorResponse},
     schema::users,
     state::AppState,
     user::{
         models::User,
-        schemas::{LoginRequest, LoginResponse},
+        schemas::{LoginRequest, UserResponse},
     },
 };
 
 #[derive(Serialize)]
 #[serde(untagged)]
 enum LoginServiceResponse {
-    Success(LoginResponse),
+    Success(UserResponse),
     Error(ErrorResponse),
 }
 
@@ -49,19 +49,18 @@ pub async fn login_service(
 
             match user {
                 Some(user) => {
-                    let token = JwtToken::new(user.id.clone());
+                    let token = Claims::new(user.id.clone());
                     let raw_token = token.encode();
 
                     into_response(
                         StatusCode::OK,
-                        LoginServiceResponse::Success(LoginResponse {
+                        LoginServiceResponse::Success(UserResponse {
                             id: user.id,
                             username: user.username,
                             first_name: user.first_name,
                             last_name: user.last_name,
                             email: user.email,
                             timestamp: user.timestamp,
-                            raw_token: raw_token.clone(),
                         }),
                         Some(raw_token),
                     )

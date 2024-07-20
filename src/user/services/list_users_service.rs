@@ -32,7 +32,9 @@ pub async fn list_users_service(State(state): State<AppState>) -> impl IntoRespo
     match users {
         Ok(Ok(users)) => {
             tracing::info!("Users retrieved successfully");
+
             let response_users: Vec<UserSchema> = users.into_iter().map(Into::into).collect();
+
             into_response(
                 StatusCode::OK,
                 ListUsersResponse {
@@ -43,19 +45,23 @@ pub async fn list_users_service(State(state): State<AppState>) -> impl IntoRespo
 
         Ok(Err(e)) => {
             tracing::error!("Failed to retrieve users: {}", e);
+
             let error_response = ErrorResponse {
                 error: "Failed to retrieve users".to_string(),
                 details: e.to_string(),
             };
+
             into_response(StatusCode::INTERNAL_SERVER_ERROR, error_response)
         }
 
         Err(e) => {
             tracing::error!("Failed to interact with the database: {}", e);
+
             let error_response = ErrorResponse {
                 error: "Database interaction failed".to_string(),
                 details: e.to_string(),
             };
+
             into_response(StatusCode::INTERNAL_SERVER_ERROR, error_response)
         }
     }

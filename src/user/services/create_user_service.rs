@@ -10,7 +10,7 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use diesel::{insert_into, Connection, RunQueryDsl};
+use diesel::{insert_into, result::Error, Connection, PgConnection, RunQueryDsl};
 use serde::Serialize;
 
 pub async fn create_user_service(
@@ -28,44 +28,52 @@ pub async fn create_user_service(
     );
 
     let result = conn
-        .interact(move |conn| {
-            conn.transaction(|conn| {
-                let insert_result = insert_into(users::table).values(&new_user).execute(conn);
-
-                match insert_result {
-                    Ok(_) => {
-                        tracing::info!("User insertion succeeded");
-                        Ok(new_user)
-                    }
-                    Err(e) => {
-                        tracing::error!("User insertion failed: {}", e);
-                        Err(e)
-                    }
-                }
-            })
-        })
+        .interact(move |conn| conn.transaction(|conn| insert_new_user(new_user, conn)))
         .await;
 
     match result {
         Ok(Ok(new_user)) => {
             tracing::info!("User created successfully: {:?}", new_user);
+
             create_response(StatusCode::CREATED, new_user)
         }
+
         Ok(Err(e)) => {
             tracing::error!("Failed to create user: {}", e);
+
             let error_response = ErrorResponse {
                 error: "Failed to create user".to_string(),
                 details: e.to_string(),
             };
+
             create_response(StatusCode::INTERNAL_SERVER_ERROR, error_response)
         }
+
         Err(e) => {
             tracing::error!("Failed to interact with the database: {}", e);
+
             let error_response = ErrorResponse {
                 error: "Database interaction failed".to_string(),
                 details: e.to_string(),
             };
+
             create_response(StatusCode::INTERNAL_SERVER_ERROR, error_response)
+        }
+    }
+}
+
+fn insert_new_user(new_user: NewUser, conn: &mut PgConnection) -> Result<NewUser, Error> {
+    match insert_into(users::table).values(&new_user).execute(conn) {
+        Ok(_) => {
+            tracing::info!("User insertion succeeded");
+
+            Ok(new_user)
+        }
+
+        Err(e) => {
+            tracing::error!("User insertion failed: {}", e);
+
+            Err(e)
         }
     }
 }

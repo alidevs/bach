@@ -41,7 +41,7 @@ impl NewUser {
     }
 }
 
-#[derive(Queryable, Selectable)]
+#[derive(Queryable, Selectable, Serialize)]
 #[diesel(table_name = users)]
 pub struct User {
     pub id: String,

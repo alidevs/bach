@@ -54,12 +54,11 @@ pub struct LoginRequest {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct LoginResponse {
+pub struct UserResponse {
     pub id: String,
     pub username: String,
     pub first_name: String,
     pub last_name: String,
     pub email: String,
     pub timestamp: chrono::NaiveDateTime,
-    pub raw_token: String,
 }
